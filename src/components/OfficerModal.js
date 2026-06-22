@@ -12,6 +12,15 @@ export default function OfficerModal({ officer, onClose, onCheckIn }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
+      setIsAdmin(!!data?.is_admin);
+    });
+  }, []);
 
   useEffect(() => {
     if (officer) {
@@ -41,7 +50,15 @@ export default function OfficerModal({ officer, onClose, onCheckIn }) {
 
   async function deleteOfficer() {
     if (!window.confirm(`Remove ${officer.name}? This cannot be undone.`)) return;
-    await supabase.from('officers').delete().eq('id', officer.id);
+    const { error, count } = await supabase.from('officers').delete({ count: 'exact' }).eq('id', officer.id);
+    if (error) {
+      window.alert('Unable to remove this officer. ' + error.message);
+      return;
+    }
+    if (!count) {
+      window.alert('You do not have permission to remove officers. Only designated admins can do this — contact the committee admin if you need an officer removed.');
+      return;
+    }
     onClose();
   }
 
@@ -96,7 +113,7 @@ export default function OfficerModal({ officer, onClose, onCheckIn }) {
           <div style={{ display:'flex', gap:8, marginTop:16, flexWrap:'wrap' }}>
             <button style={S.btn()} onClick={()=>onCheckIn(officer)}>Check In</button>
             <button style={S.btnOut} onClick={()=>setEditMode(true)}>Edit</button>
-            <button style={{ ...S.btn('#c62828'), marginLeft:'auto' }} onClick={deleteOfficer}>Remove</button>
+            {isAdmin && <button style={{ ...S.btn('#c62828'), marginLeft:'auto' }} onClick={deleteOfficer}>Remove</button>}
             <button style={S.btnOut} onClick={onClose}>Close</button>
           </div>
         </> : <>
