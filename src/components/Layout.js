@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import nccnLogo from '../assets/nccn-logo.jpg';
 
 export default function Layout({ session }) {
   const navigate = useNavigate();
@@ -29,9 +30,12 @@ export default function Layout({ session }) {
   return (
     <div style={{ minHeight:'100vh', background:'#f0f4f8', fontFamily:'Georgia,serif' }}>
       <div style={{ background:'linear-gradient(135deg,#0d2240,#1a3a5c)', padding:'0 20px', display:'flex', alignItems:'center', justifyContent:'space-between', height:60, boxShadow:'0 2px 10px rgba(0,0,0,.3)' }}>
-        <div>
-          <div style={{ color:'#fff', fontSize:15, fontWeight:'bold', letterSpacing:1 }}>🇳🇬 NCCN</div>
-          <div style={{ color:'#c8a800', fontSize:11, letterSpacing:2, textTransform:'uppercase' }}>Welfare Committee Tracker</div>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <img src={nccnLogo} alt="NCCN" style={{ width:42, height:42, borderRadius:'50%', objectFit:'cover', border:'2px solid #c8a800' }}/>
+          <div>
+            <div style={{ color:'#fff', fontSize:15, fontWeight:'bold', letterSpacing:1 }}>NCCN</div>
+            <div style={{ color:'#c8a800', fontSize:11, letterSpacing:2, textTransform:'uppercase' }}>Welfare Committee Tracker</div>
+          </div>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
           {profile && <span style={{ color:'#aac4e0', fontSize:12 }}>{profile.full_name}</span>}

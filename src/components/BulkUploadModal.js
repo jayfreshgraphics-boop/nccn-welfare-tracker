@@ -3,13 +3,12 @@ import * as XLSX from 'xlsx';
 import { supabase } from '../lib/supabase';
 import { S } from '../lib/helpers';
 
-const REQUIRED_COLS = ['name', 'rank', 'unit'];
-const VALID_STATUSES = ['GREEN', 'AMBER', 'RED'];
+const VALID_STATUSES = ['NOTSET', 'GREEN', 'AMBER', 'RED'];
 
 function normalizeStatus(val) {
-  if (!val) return 'GREEN';
+  if (!val) return 'NOTSET';
   const v = val.toString().toUpperCase().trim();
-  return VALID_STATUSES.includes(v) ? v : 'GREEN';
+  return VALID_STATUSES.includes(v) ? v : 'NOTSET';
 }
 
 function parseRows(rawRows) {
@@ -26,15 +25,20 @@ function parseRows(rawRows) {
     };
     return {
       _row: i + 2,
-      name:        get('name') || get('full_name') || get('officer_name'),
-      rank:        get('rank') || get('title') || get('position'),
-      unit:        get('unit') || get('unit_name') || get('platoon'),
-      status:      normalizeStatus(get('status') || get('welfare_status')),
-      assigned_to: get('assigned_to') || get('assigned') || get('welfare_officer') || '',
-      notes:       get('notes') || get('remarks') || '',
-      _valid: !!(get('name')||get('full_name')||get('officer_name')) && !!(get('rank')||get('title')||get('position')) && !!(get('unit')||get('unit_name')||get('platoon')),
+      name:          get('name') || get('full_name') || get('officer_name'),
+      rank:          get('rank') || get('title') || get('position') || '',
+      unit:          get('unit') || get('designation') || get('status') || get('platoon') || '',
+      welfare_status:normalizeStatus(get('welfare_status') || get('welfare')),
+      assigned_to:   get('assigned_to') || get('assigned') || get('welfare_officer') || '',
+      intake_number: get('intake_number') || get('intake') || '',
+      email:         get('email') || get('email_address') || '',
+      phone:         get('phone') || get('phone_number') || get('phone number') || '',
+      address:       get('home_address') || get('address') || '',
+      faculty_dept:  get('faculty_and_department_in_school_(if_student)') || get('faculty_and_department') || get('faculty_dept') || get('department') || get('faculty') || '',
+      notes:         get('notes') || get('remarks') || '',
+      _valid: !!(get('name')||get('full_name')||get('officer_name')) && !!(get('unit')||get('designation')||get('status')||get('platoon')),
     };
-  }).filter(r => r.name || r.rank || r.unit); // skip totally empty rows
+  }).filter(r => r.name || r.unit); // skip totally empty rows
 }
 
 export default function BulkUploadModal({ onClose, onSaved }) {
@@ -74,8 +78,13 @@ export default function BulkUploadModal({ onClose, onSaved }) {
   async function importOfficers() {
     if (!valid.length) return;
     setLoading(true); setError('');
-    const toInsert = valid.map(r => ({ name:r.name, rank:r.rank, unit:r.unit, status:r.status, assigned_to:r.assigned_to||'', notes:r.notes }));
-    const { error, count } = await supabase.from('officers').insert(toInsert, { count:'exact' });
+    const toInsert = valid.map(r => ({
+      name: r.name, rank: r.rank, unit: r.unit, status: r.welfare_status,
+      assigned_to: r.assigned_to, intake_number: r.intake_number,
+      email: r.email, phone: r.phone, address: r.address,
+      faculty_dept: r.faculty_dept, notes: r.notes,
+    }));
+    const { error } = await supabase.from('officers').insert(toInsert, { count:'exact' });
     if (error) { setError(error.message); setLoading(false); return; }
     setResult({ imported: toInsert.length });
     setLoading(false);
@@ -83,11 +92,11 @@ export default function BulkUploadModal({ onClose, onSaved }) {
 
   function downloadTemplate() {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['name', 'rank', 'unit', 'status', 'notes'],
-      ['CDT Amara Okafor', 'Cadet Officer', 'Alpha Unit', 'GREEN', ''],
-      ['CDT Bisi Adeyemi', 'Training Officer', 'Bravo Unit', 'AMBER', 'Follow up needed'],
+      ['Name', 'Designation', 'Intake Number', 'Email', 'Phone number', 'Home Address', 'Faculty and Department in School (if student)', 'Welfare_Status'],
+      ['CDT. Amara Okafor', 'Oaustech Unit 9', '9', 'amara.okafor@gmail.com', '8012345678', 'No 5 Example Street, Okitipupa', 'Faculty of Engineering, Electrical Engineering', ''],
+      ['CDT. Bisi Adeyemi', 'Akure Unit 8', '8', 'bisi.adeyemi@gmail.com', '8023456789', 'No 12 Sample Road, Akure', 'Faculty of Science, Biochemistry', 'AMBER'],
     ]);
-    ws['!cols'] = [{ wch:28 },{ wch:22 },{ wch:18 },{ wch:10 },{ wch:30 }];
+    ws['!cols'] = [{ wch:28 },{ wch:18 },{ wch:12 },{ wch:26 },{ wch:14 },{ wch:32 },{ wch:34 },{ wch:14 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Officers');
     XLSX.writeFile(wb, 'NCCN_Officers_Template.xlsx');
@@ -95,20 +104,18 @@ export default function BulkUploadModal({ onClose, onSaved }) {
 
   return (
     <div style={S.overlay} onClick={onClose}>
-      <div style={{ ...S.modal, maxWidth:620 }} onClick={e=>e.stopPropagation()}>
+      <div style={{ ...S.modal, maxWidth:680 }} onClick={e=>e.stopPropagation()}>
         <div style={S.mTitle}>📂 Bulk Upload Officers</div>
 
         {result ? (
-          // ── Success screen ──
           <div style={{ textAlign:'center', padding:'20px 0' }}>
             <div style={{ fontSize:52, marginBottom:12 }}>✅</div>
             <div style={{ fontSize:20, fontWeight:'bold', color:'#1e7e34', marginBottom:8 }}>{result.imported} officers imported!</div>
-            <div style={{ fontSize:14, color:'#666', marginBottom:24 }}>They are now live in the tracker.</div>
+            <div style={{ fontSize:14, color:'#666', marginBottom:24 }}>They are now live in the tracker with welfare status set to "Not Set" unless specified.</div>
             <button style={S.btn()} onClick={onSaved}>View Officers</button>
           </div>
         ) : (
           <>
-            {/* Template download */}
             <div style={{ background:'#eff4fa', borderRadius:8, padding:'12px 14px', marginBottom:16, display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
               <div>
                 <div style={{ fontSize:13, fontWeight:'bold', color:'#1a3a5c' }}>First time? Download the template</div>
@@ -117,13 +124,11 @@ export default function BulkUploadModal({ onClose, onSaved }) {
               <button style={S.btn('#c8a800')} onClick={downloadTemplate}>⬇ Download Template</button>
             </div>
 
-            {/* Column guide */}
             <div style={{ fontSize:12, color:'#555', marginBottom:14, lineHeight:1.7 }}>
-              <strong>Required columns:</strong> <code>name</code>, <code>rank</code>, <code>unit</code><br/>
-              <strong>Optional columns:</strong> <code>status</code> (GREEN / AMBER / RED — defaults to GREEN), <code>notes</code>
+              <strong>Required columns:</strong> <code>Name</code>, <code>Designation</code> (used as Unit)<br/>
+              <strong>Optional columns:</strong> <code>Intake Number</code>, <code>Email</code>, <code>Phone number</code>, <code>Home Address</code>, <code>Faculty and Department</code>, <code>Welfare_Status</code> (GREEN/AMBER/RED — leave blank for "Not Set")
             </div>
 
-            {/* Drop zone */}
             {!rows.length && (
               <div
                 onDrop={handleDrop}
@@ -140,7 +145,6 @@ export default function BulkUploadModal({ onClose, onSaved }) {
 
             {error && <div style={{ background:'#fce8e6', color:'#c62828', borderRadius:6, padding:'8px 12px', fontSize:13, marginBottom:12 }}>{error}</div>}
 
-            {/* Preview table */}
             {rows.length > 0 && (
               <>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
@@ -152,15 +156,15 @@ export default function BulkUploadModal({ onClose, onSaved }) {
 
                 {invalid.length > 0 && (
                   <div style={{ background:'#fff8e1', border:'1px solid #fbbc04', borderRadius:7, padding:'10px 12px', fontSize:12, color:'#b07d00', marginBottom:10 }}>
-                    ⚠️ {invalid.length} row{invalid.length!==1?'s':''} will be skipped — missing name, rank, or unit (rows: {invalid.map(r=>r._row).join(', ')})
+                    ⚠️ {invalid.length} row{invalid.length!==1?'s':''} will be skipped — missing name or designation/unit (rows: {invalid.map(r=>r._row).join(', ')})
                   </div>
                 )}
 
-                <div style={{ maxHeight:240, overflowY:'auto', border:'1px solid #eee', borderRadius:7, marginBottom:14 }}>
+                <div style={{ maxHeight:280, overflowY:'auto', border:'1px solid #eee', borderRadius:7, marginBottom:14 }}>
                   <table style={{ width:'100%', borderCollapse:'collapse' }}>
                     <thead>
                       <tr>
-                        {['#','Name','Rank','Unit','Status','Assigned To','Valid?'].map(h=>(
+                        {['#','Name','Unit','Email','Phone','Status','Valid?'].map(h=>(
                           <th key={h} style={{ ...S.th, padding:'7px 10px', fontSize:11 }}>{h}</th>
                         ))}
                       </tr>
@@ -170,13 +174,13 @@ export default function BulkUploadModal({ onClose, onSaved }) {
                         <tr key={i} style={{ background: !r._valid ? '#fff8e1' : i%2===0?'#fff':'#f8fafc' }}>
                           <td style={{ ...S.td, padding:'6px 10px', fontSize:12, color:'#888' }}>{r._row}</td>
                           <td style={{ ...S.td, padding:'6px 10px', fontSize:12 }}>{r.name||<span style={{ color:'#c62828' }}>—</span>}</td>
-                          <td style={{ ...S.td, padding:'6px 10px', fontSize:12 }}>{r.rank||<span style={{ color:'#c62828' }}>—</span>}</td>
                           <td style={{ ...S.td, padding:'6px 10px', fontSize:12 }}>{r.unit||<span style={{ color:'#c62828' }}>—</span>}</td>
+                          <td style={{ ...S.td, padding:'6px 10px', fontSize:11, color:'#666' }}>{r.email || '—'}</td>
+                          <td style={{ ...S.td, padding:'6px 10px', fontSize:11, color:'#666' }}>{r.phone || '—'}</td>
                           <td style={{ ...S.td, padding:'6px 10px', fontSize:12 }}>
-                            <span style={{ color: r.status==='GREEN'?'#1e7e34':r.status==='AMBER'?'#b07d00':'#c62828', fontWeight:'bold' }}>{r.status}</span>
-                          </td>
-                          <td style={{ ...S.td, padding:'6px 10px', fontSize:12, color: r.assigned_to?'#333':'#bbb', fontStyle: r.assigned_to?'normal':'italic' }}>
-                            {r.assigned_to || 'Unassigned'}
+                            <span style={{ color: r.welfare_status==='GREEN'?'#1e7e34':r.welfare_status==='AMBER'?'#b07d00':r.welfare_status==='RED'?'#c62828':'#999', fontWeight:'bold' }}>
+                              {r.welfare_status==='NOTSET' ? 'Not Set' : r.welfare_status}
+                            </span>
                           </td>
                           <td style={{ ...S.td, padding:'6px 10px', fontSize:13, textAlign:'center' }}>{r._valid?'✅':'⚠️'}</td>
                         </tr>
@@ -185,7 +189,7 @@ export default function BulkUploadModal({ onClose, onSaved }) {
                   </table>
                 </div>
 
-                <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
                   <button style={{ ...S.btn(), opacity:(!valid.length||loading)?.7:1 }} onClick={importOfficers} disabled={!valid.length||loading}>
                     {loading ? 'Importing...' : `Import ${valid.length} Officer${valid.length!==1?'s':''}`}
                   </button>

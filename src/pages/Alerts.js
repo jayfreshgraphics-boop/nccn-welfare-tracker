@@ -20,7 +20,8 @@ export default function Alerts() {
 
   const reds   = officers.filter(o=>o.status==='RED');
   const ambers = officers.filter(o=>o.status==='AMBER');
-  const overdue = officers.filter(o=>o.status!=='RED'&&isOverdue(o.last_checked));
+  const notset = officers.filter(o=>o.status==='NOTSET');
+  const overdue = officers.filter(o=>o.status!=='RED'&&o.status!=='NOTSET'&&isOverdue(o.last_checked));
 
   return (
     <>
@@ -68,7 +69,20 @@ export default function Alerts() {
         ))}
       </div>}
 
-      {!reds.length&&!ambers.length&&!overdue.length && (
+      {notset.length>0 && <div style={S.card}>
+        <div style={{ ...S.sTitle, color:'#777' }}>⚪ Awaiting First Check-in</div>
+        {notset.map(o=>(
+          <div key={o.id} style={alertBox('#f5f5f5','#ccc')}>
+            <div>
+              <strong style={{ color:'#555' }}>{o.name}</strong>
+              <div style={{ fontSize:12,color:'#666' }}>{o.rank} — {o.unit}</div>
+            </div>
+            <button style={S.btn('#777')} onClick={()=>setCheckInTarget(o)}>Set Status</button>
+          </div>
+        ))}
+      </div>}
+
+      {!reds.length&&!ambers.length&&!overdue.length&&!notset.length && (
         <div style={{ ...S.card, textAlign:'center', padding:56 }}>
           <div style={{ fontSize:52 }}>✅</div>
           <div style={{ fontSize:18, fontWeight:'bold', color:'#1e7e34', marginTop:12 }}>No Active Alerts</div>

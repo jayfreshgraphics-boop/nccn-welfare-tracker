@@ -1,7 +1,8 @@
 export const STATUS = {
-  GREEN: { bg:'#e6f4ea', text:'#1e7e34', border:'#34a853', dot:'#34a853', label:'All Clear' },
-  AMBER: { bg:'#fff8e1', text:'#b07d00', border:'#fbbc04', dot:'#fbbc04', label:'Monitor' },
-  RED:   { bg:'#fce8e6', text:'#c62828', border:'#ea4335', dot:'#ea4335', label:'Urgent' },
+  NOTSET: { bg:'#f1f1f1', text:'#777', border:'#bbb', dot:'#bbb', label:'Not Set' },
+  GREEN:  { bg:'#e6f4ea', text:'#1e7e34', border:'#34a853', dot:'#34a853', label:'All Clear' },
+  AMBER:  { bg:'#fff8e1', text:'#b07d00', border:'#fbbc04', dot:'#fbbc04', label:'Monitor' },
+  RED:    { bg:'#fce8e6', text:'#c62828', border:'#ea4335', dot:'#ea4335', label:'Urgent' },
 };
 
 export function daysSince(d) {

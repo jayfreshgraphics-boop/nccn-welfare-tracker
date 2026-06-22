@@ -5,7 +5,7 @@ import { S } from '../lib/helpers';
 const today = new Date().toISOString().split('T')[0];
 
 export default function CheckInModal({ officer, onClose, onSaved }) {
-  const [form, setForm] = useState({ status: officer.status, notes:'', date: today });
+  const [form, setForm] = useState({ status: officer.status === 'NOTSET' ? 'GREEN' : officer.status, notes:'', date: today });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

@@ -28,7 +28,7 @@ export default function Officers() {
   const filtered = officers.filter(o =>
     (filterStatus==='ALL' || o.status===filterStatus) &&
     (filterUnit==='ALL' || o.unit===filterUnit) &&
-    (o.name.toLowerCase().includes(search.toLowerCase()) || o.rank.toLowerCase().includes(search.toLowerCase()))
+    (o.name.toLowerCase().includes(search.toLowerCase()) || (o.rank||'').toLowerCase().includes(search.toLowerCase()) || (o.email||'').toLowerCase().includes(search.toLowerCase()))
   );
 
   if (loading) return <div style={{ textAlign:'center', padding:60, color:'#888' }}>Loading...</div>;
@@ -40,6 +40,7 @@ export default function Officers() {
         <input style={{ ...S.input, width:180, flex:1 }} placeholder="Search officers..." value={search} onChange={e=>setSearch(e.target.value)}/>
         <select style={S.select} value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}>
           <option value="ALL">All Statuses</option>
+          <option value="NOTSET">⚪ Not Set</option>
           <option value="GREEN">🟢 All Clear</option>
           <option value="AMBER">🟡 Monitor</option>
           <option value="RED">🔴 Urgent</option>
@@ -54,6 +55,7 @@ export default function Officers() {
       {/* Summary bar */}
       <div style={{ background:'#fff', borderRadius:8, padding:'10px 16px', marginBottom:14, boxShadow:'0 1px 4px rgba(0,0,0,.06)', display:'flex', gap:20, flexWrap:'wrap', fontSize:13 }}>
         <span><strong style={{ color:'#1a3a5c' }}>{officers.length}</strong> total officers</span>
+        <span><strong style={{ color:'#777' }}>{officers.filter(o=>o.status==='NOTSET').length}</strong> not set</span>
         <span><strong style={{ color:'#1e7e34' }}>{officers.filter(o=>o.status==='GREEN').length}</strong> all clear</span>
         <span><strong style={{ color:'#b07d00' }}>{officers.filter(o=>o.status==='AMBER').length}</strong> monitoring</span>
         <span><strong style={{ color:'#c62828' }}>{officers.filter(o=>o.status==='RED').length}</strong> urgent</span>
@@ -82,7 +84,7 @@ export default function Officers() {
                 {filtered.map((o,i) => (
                   <tr key={o.id} style={{ background:i%2===0?'#fff':'#f8fafc' }}>
                     <td style={S.td}><strong style={{ color:'#1a3a5c' }}>{o.name}</strong></td>
-                    <td style={S.td}>{o.rank}</td>
+                    <td style={{ ...S.td, color: o.rank ? '#333' : '#bbb', fontStyle: o.rank ? 'normal' : 'italic' }}>{o.rank || '—'}</td>
                     <td style={S.td}>{o.unit}</td>
                     <td style={S.td}><span style={S.pill(o.status)}><span style={S.dot(o.status)}/>{STATUS[o.status].label}</span></td>
                     <td style={{ ...S.td, color: o.assigned_to ? '#1a3a5c' : '#bbb', fontStyle: o.assigned_to ? 'normal' : 'italic' }}>

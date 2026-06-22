@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import nccnLogo from '../assets/nccn-logo.jpg';
 
 const S = {
   page: { minHeight:'100vh', background:'linear-gradient(135deg,#0d2240,#1a3a5c)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Georgia,serif', padding:16 },
@@ -45,7 +46,9 @@ export default function Login() {
   return (
     <div style={S.page}>
       <div style={S.box}>
-        <div style={{ textAlign:'center', marginBottom:4, fontSize:40 }}>🇳🇬</div>
+        <div style={{ textAlign:'center', marginBottom:4 }}>
+          <img src={nccnLogo} alt="NCCN" style={{ width:72, height:72, borderRadius:'50%', objectFit:'cover', border:'3px solid #c8a800' }}/>
+        </div>
         <div style={S.title}>NCCN</div>
         <div style={S.sub}>Welfare Committee Tracker</div>
         <div style={S.divider}/>
