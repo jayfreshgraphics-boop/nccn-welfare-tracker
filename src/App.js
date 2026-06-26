@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Officers from './pages/Officers';
 import Alerts from './pages/Alerts';
+import MyProfile from './pages/MyProfile';
 import Layout from './components/Layout';
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/officers" element={<Officers />} />
           <Route path="/alerts" element={<Alerts />} />
+          <Route path="/profile" element={<MyProfile />} />
         </Route>
       </Routes>
     </BrowserRouter>

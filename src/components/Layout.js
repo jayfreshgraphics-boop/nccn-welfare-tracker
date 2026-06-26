@@ -38,7 +38,24 @@ export default function Layout({ session }) {
           </div>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          {profile && <span style={{ color:'#aac4e0', fontSize:12 }}>{profile.full_name}</span>}
+          {profile && (
+            <div
+              onClick={() => navigate('/profile')}
+              title="View your profile"
+              style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', padding:'4px 8px', borderRadius:20, transition:'background 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background='transparent'}
+            >
+              <span style={{ color:'#aac4e0', fontSize:12 }}>{profile.full_name}</span>
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt="Profile" style={{ width:32, height:32, borderRadius:'50%', objectFit:'cover', border:'2px solid #c8a800' }}/>
+              ) : (
+                <div style={{ width:32, height:32, borderRadius:'50%', background:'#c8a800', display:'flex', alignItems:'center', justifyContent:'center', color:'#0d2240', fontSize:13, fontWeight:'bold', fontFamily:'Georgia,serif' }}>
+                  {(profile.full_name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase()}
+                </div>
+              )}
+            </div>
+          )}
           <button onClick={signOut} style={{ background:'transparent', border:'1px solid #aac4e0', color:'#aac4e0', borderRadius:6, padding:'5px 12px', cursor:'pointer', fontSize:12, fontFamily:'Georgia,serif' }}>Sign Out</button>
         </div>
       </div>

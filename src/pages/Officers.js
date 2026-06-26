@@ -28,7 +28,7 @@ export default function Officers() {
   const filtered = officers.filter(o =>
     (filterStatus==='ALL' || o.status===filterStatus) &&
     (filterUnit==='ALL' || o.unit===filterUnit) &&
-    (o.name.toLowerCase().includes(search.toLowerCase()) || (o.rank||'').toLowerCase().includes(search.toLowerCase()) || (o.email||'').toLowerCase().includes(search.toLowerCase()))
+    (o.name.toLowerCase().includes(search.toLowerCase()) || (o.rank||'').toLowerCase().includes(search.toLowerCase()) || (o.email||'').toLowerCase().includes(search.toLowerCase()) || (o.intake_number||'').toLowerCase().includes(search.toLowerCase()))
   );
 
   if (loading) return <div style={{ textAlign:'center', padding:60, color:'#888' }}>Loading...</div>;
@@ -78,13 +78,14 @@ export default function Officers() {
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
-                <tr>{['Officer','Rank','Unit','Status','Assigned To','Last Checked','Actions'].map(h=><th key={h} style={S.th}>{h}</th>)}</tr>
+                <tr>{['Officer','Rank','Intake','Unit','Status','Assigned To','Last Checked','Actions'].map(h=><th key={h} style={S.th}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {filtered.map((o,i) => (
                   <tr key={o.id} style={{ background:i%2===0?'#fff':'#f8fafc' }}>
                     <td style={S.td}><strong style={{ color:'#1a3a5c' }}>{o.name}</strong></td>
                     <td style={{ ...S.td, color: o.rank ? '#333' : '#bbb', fontStyle: o.rank ? 'normal' : 'italic' }}>{o.rank || '—'}</td>
+                    <td style={{ ...S.td, color: o.intake_number ? '#333' : '#bbb', fontStyle: o.intake_number ? 'normal' : 'italic' }}>{o.intake_number || '—'}</td>
                     <td style={S.td}>{o.unit}</td>
                     <td style={S.td}><span style={S.pill(o.status)}><span style={S.dot(o.status)}/>{STATUS[o.status].label}</span></td>
                     <td style={{ ...S.td, color: o.assigned_to ? '#1a3a5c' : '#bbb', fontStyle: o.assigned_to ? 'normal' : 'italic' }}>
@@ -100,7 +101,7 @@ export default function Officers() {
                   </tr>
                 ))}
                 {filtered.length===0 && officers.length>0 && (
-                  <tr><td colSpan={7} style={{ ...S.td, textAlign:'center', color:'#888', padding:32 }}>No officers match the filters.</td></tr>
+                  <tr><td colSpan={8} style={{ ...S.td, textAlign:'center', color:'#888', padding:32 }}>No officers match the filters.</td></tr>
                 )}
               </tbody>
             </table>
