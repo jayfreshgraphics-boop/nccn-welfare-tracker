@@ -13,6 +13,7 @@ export default function OfficerModal({ officer, onClose, onCheckIn }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [committeeMembers, setCommitteeMembers] = useState([]);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -20,6 +21,11 @@ export default function OfficerModal({ officer, onClose, onCheckIn }) {
       const { data } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
       setIsAdmin(!!data?.is_admin);
     });
+  }, []);
+
+  useEffect(() => {
+    supabase.from('profiles').select('id, full_name').order('full_name')
+      .then(({ data }) => setCommitteeMembers(data || []));
   }, []);
 
   useEffect(() => {
@@ -138,7 +144,15 @@ export default function OfficerModal({ officer, onClose, onCheckIn }) {
           </select>
 
           <label style={S.label}>Assigned To (Welfare Officer)</label>
-          <input style={S.input} placeholder="e.g. CDT Amaka Obi" value={form.assigned_to||''} onChange={e=>setForm(p=>({...p,assigned_to:e.target.value}))}/>
+          <select style={{ ...S.select, width:'100%' }} value={form.assigned_to||''} onChange={e=>setForm(p=>({...p,assigned_to:e.target.value}))}>
+            <option value="">— Unassigned —</option>
+            {committeeMembers.map(m => (
+              <option key={m.id} value={m.full_name}>{m.full_name}</option>
+            ))}
+            {form.assigned_to && !committeeMembers.some(m => m.full_name === form.assigned_to) && (
+              <option value={form.assigned_to}>{form.assigned_to} (not a registered account)</option>
+            )}
+          </select>
 
           <label style={S.label}>Intake Number</label>
           <input style={S.input} placeholder="e.g. 9" value={form.intake_number||''} onChange={e=>setForm(p=>({...p,intake_number:e.target.value}))}/>
