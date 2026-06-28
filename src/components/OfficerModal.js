@@ -40,7 +40,10 @@ export default function OfficerModal({ officer, onClose, onCheckIn }) {
     setLoading(true); setError('');
     const payload = {
       name: form.name, rank: form.rank||'', unit: form.unit, status: form.status,
-      assigned_to: form.assigned_to||'', intake_number: form.intake_number||'',
+      // Non-admins can never push a changed assigned_to — even if the UI were bypassed,
+      // this keeps the value pinned to whatever it already was on the record.
+      assigned_to: isAdmin ? (form.assigned_to||'') : (officer?.assigned_to||''),
+      intake_number: form.intake_number||'',
       email: form.email||'', phone: form.phone||'', address: form.address||'',
       faculty_dept: form.faculty_dept||'', notes: form.notes||'',
     };
@@ -49,7 +52,14 @@ export default function OfficerModal({ officer, onClose, onCheckIn }) {
       if (error) { setError(error.message); setLoading(false); return; }
     } else {
       const { error } = await supabase.from('officers').update(payload).eq('id', officer.id);
-      if (error) { setError(error.message); setLoading(false); return; }
+      if (error) {
+        const friendly = error.message?.includes('Only admins can change')
+          ? 'Only admins can change the Assigned To field.'
+          : error.message;
+        setError(friendly);
+        setLoading(false);
+        return;
+      }
     }
     onClose();
   }
@@ -144,15 +154,24 @@ export default function OfficerModal({ officer, onClose, onCheckIn }) {
           </select>
 
           <label style={S.label}>Assigned To (Welfare Officer)</label>
-          <select style={{ ...S.select, width:'100%' }} value={form.assigned_to||''} onChange={e=>setForm(p=>({...p,assigned_to:e.target.value}))}>
-            <option value="">— Unassigned —</option>
-            {committeeMembers.map(m => (
-              <option key={m.id} value={m.full_name}>{m.full_name}</option>
-            ))}
-            {form.assigned_to && !committeeMembers.some(m => m.full_name === form.assigned_to) && (
-              <option value={form.assigned_to}>{form.assigned_to} (not a registered account)</option>
-            )}
-          </select>
+          {isAdmin ? (
+            <select style={{ ...S.select, width:'100%' }} value={form.assigned_to||''} onChange={e=>setForm(p=>({...p,assigned_to:e.target.value}))}>
+              <option value="">— Unassigned —</option>
+              {committeeMembers.map(m => (
+                <option key={m.id} value={m.full_name}>{m.full_name}</option>
+              ))}
+              {form.assigned_to && !committeeMembers.some(m => m.full_name === form.assigned_to) && (
+                <option value={form.assigned_to}>{form.assigned_to} (not a registered account)</option>
+              )}
+            </select>
+          ) : (
+            <>
+              <select style={{ ...S.select, width:'100%', background:'#f1f1f1', color:'#888', cursor:'not-allowed' }} value={form.assigned_to||''} disabled>
+                <option value={form.assigned_to||''}>{form.assigned_to || '— Unassigned —'}</option>
+              </select>
+              <div style={{ fontSize:11, color:'#999', marginTop:3, fontStyle:'italic' }}>Only admins can change this field.</div>
+            </>
+          )}
 
           <label style={S.label}>Intake Number</label>
           <input style={S.input} placeholder="e.g. 9" value={form.intake_number||''} onChange={e=>setForm(p=>({...p,intake_number:e.target.value}))}/>
