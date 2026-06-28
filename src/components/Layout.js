@@ -63,6 +63,7 @@ export default function Layout({ session }) {
         <NavLink to="/" end style={navStyle}>📊 Dashboard</NavLink>
         <NavLink to="/officers" style={navStyle}>👥 Officers</NavLink>
         <NavLink to="/alerts" style={navStyle}>🚨 Alerts{redCount>0?` (${redCount})`:''}</NavLink>
+        {profile?.is_admin && <NavLink to="/manage-committee" style={navStyle}>🛡️ Manage Committee</NavLink>}
       </div>
       <div style={{ maxWidth:1080, margin:'0 auto', padding:'20px 14px' }}>
         <Outlet />
